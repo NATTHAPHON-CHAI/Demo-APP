@@ -108,7 +108,7 @@ class DataHandler:
                     continue
 
                 # ถ้าไม่มีตัวเลขเลย ให้ข้าม
-                if not df[col].str.contains(r"\d", na=False).any():
+                if not df[col].astype(str).str.contains(r"\d", na=False).any():
                     continue
 
                 # -----------------------------
