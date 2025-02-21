@@ -65,9 +65,10 @@ class DataHandler:
                     # หากเกิดปัญหาในการ decode ด้วย UTF-8 ให้ลองใช้ encoding "latin1"
                     logging.warning(f"UTF-8 decoding failed for {key}. Trying 'latin1'.")
                     self._data[key] = pd.read_csv(dataset_path, encoding="latin1")
-            elif ext in [".xls", ".xlsx"]:
-                # หากเป็นไฟล์ Excel ให้ใช้ pd.read_excel ในการโหลดข้อมูล
-                self._data[key] = pd.read_excel(dataset_path)
+            elif ext == ".xls":
+                self._data[key] = pd.read_excel(dataset_path, engine='xlrd')
+            elif ext == ".xlsx":
+                self._data[key] = pd.read_excel(dataset_path, engine='openpyxl')
             else:
                 # หากนามสกุลไม่รองรับ ให้โยนข้อผิดพลาด
                 raise ValueError(f"Unsupported file extension for {key}: {ext}")
