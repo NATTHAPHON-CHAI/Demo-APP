@@ -146,7 +146,7 @@ class DataHandler:
                 # -----------------------------
                 # 2. แปลงเป็น numeric
                 # -----------------------------
-                cleaned = df[col].str.replace(r"[^\d\.-]", "", regex=True)  # ลบอักขระที่ไม่ใช่ตัวเลข จุด หรือ "-"
+                cleaned = df[col].astype(str).str.replace(r"[^\d\.-]", "", regex=True)  # ลบอักขระที่ไม่ใช่ตัวเลข จุด หรือ "-"
                 numeric_series = pd.to_numeric(cleaned, errors="coerce")
                 non_na_ratio = numeric_series.notna().mean()
                 logging.info(f"Column '{col}' in dataset '{key}' numeric conversion ratio: {non_na_ratio:.2f}")
