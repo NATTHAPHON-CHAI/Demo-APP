@@ -83,48 +83,50 @@ class DataHandler:
 
 
     def preprocess_data(self, threshold: float = 0.8, date_format: str = "%Y-%m-%d") -> None:
-        """
-        ฟังก์ชัน preprocess ข้อมูลใน dataset โดย:
-        1. แปลงคอลัมน์วันที่ที่เป็น string เป็น datetime หาก non-NaT >= threshold
-        2. แปลงคอลัมน์ string ที่มีตัวเลขเป็น numeric หาก non-NaN >= threshold
-
-        Parameters:
-            threshold (float): อัตราส่วนขั้นต่ำ (ค่าเริ่มต้น 0.8) ของค่าที่แปลงได้เพื่อให้การแปลงสำเร็จ
-        """
         if not self._data:
             raise ValueError("Data not loaded.")
 
         id_pattern = r"id"  # regex สำหรับคอลัมน์ที่มี "id"
 
         for key, df in self._data.items():
+            logging.info(f"Starting preprocessing for dataset '{key}'.")
             for col in df.columns:
+                logging.info(f"Processing column '{col}'.")
                 # ข้ามคอลัมน์ที่มี "id" ในชื่อ (ไม่สนใจ case)
                 if re.search(id_pattern, col, re.IGNORECASE):
-                    logging.info(f"Column '{col}' in dataset '{key}' skipped (contains 'id').")
+                    logging.info(f"Column '{col}' skipped (contains 'id').")
                     continue
 
                 # ตรวจสอบเฉพาะคอลัมน์ที่เป็น object (string)
                 if df[col].dtype != "object":
+                    logging.info(f"Column '{col}' skipped (dtype is not object).")
                     continue
 
-                # ถ้าไม่มีตัวเลขเลย ให้ข้าม
-                if not df[col].astype(str).str.contains(r"\d", na=False).any():
+                try:
+                    # แปลงคอลัมน์เป็น string และตรวจสอบว่ามีตัวเลขหรือไม่
+                    if not df[col].astype(str).str.contains(r"\d", na=False).any():
+                        logging.info(f"Column '{col}' skipped (no digits found).")
+                        continue
+                except Exception as e:
+                    logging.error(f"Error checking digits in column '{col}' of dataset '{key}': {e}")
                     continue
 
                 # -----------------------------
                 # 1. แปลงเป็น datetime
                 # -----------------------------
                 try:
+                    logging.info(f"Attempting datetime conversion for column '{col}'.")
                     datetime_series = pd.to_datetime(df[col], errors="coerce", dayfirst=True, format=date_format)
                 except Exception as e:
                     logging.error(f"Error parsing datetime in column '{col}' of dataset '{key}': {e}")
                     datetime_series = pd.Series([pd.NaT] * len(df[col]))
 
                 non_na_ratio = datetime_series.notna().mean()
-                logging.info(f"Column '{col}' in dataset '{key}' datetime conversion ratio: {non_na_ratio:.2f}")
+                logging.info(f"Column '{col}' datetime conversion ratio: {non_na_ratio:.2f}")
 
                 # หากอัตราส่วนไม่ถึง threshold ใช้ fallback ด้วย dateutil.parser
                 if non_na_ratio < threshold:
+                    logging.info(f"Using fallback datetime parsing for column '{col}'.")
                     def safe_parse(x):
                         if not isinstance(x, str):
                             return pd.NaT
@@ -132,31 +134,40 @@ class DataHandler:
                             return parse(x)
                         except Exception:
                             return pd.NaT
+                    try:
+                        datetime_series = df[col].apply(safe_parse)
+                        non_na_ratio = datetime_series.notna().mean()
+                        logging.info(f"Column '{col}' fallback datetime conversion ratio: {non_na_ratio:.2f}")
+                    except Exception as e:
+                        logging.error(f"Fallback datetime parsing failed for column '{col}' in dataset '{key}': {e}")
+                        continue
 
-                    datetime_series = df[col].apply(safe_parse)
-                    non_na_ratio = datetime_series.notna().mean()
-                    logging.info(f"Column '{col}' in dataset '{key}' fallback datetime conversion ratio: {non_na_ratio:.2f}")
-
-                #  หากแปลง datetime สำเร็จ ให้แทนที่คอลัมน์
+                # หากแปลง datetime สำเร็จ ให้แทนที่คอลัมน์แล้วข้ามไปคอลัมน์ถัดไป
                 if non_na_ratio >= threshold:
                     df[col] = datetime_series
-                    logging.info(f"Column '{col}' in dataset '{key}' converted to datetime.")
+                    logging.info(f"Column '{col}' successfully converted to datetime.")
                     continue
 
                 # -----------------------------
                 # 2. แปลงเป็น numeric
                 # -----------------------------
-                cleaned = df[col].astype(str).str.replace(r"[^\d\.-]", "", regex=True)  # ลบอักขระที่ไม่ใช่ตัวเลข จุด หรือ "-"
-                numeric_series = pd.to_numeric(cleaned, errors="coerce")
-                non_na_ratio = numeric_series.notna().mean()
-                logging.info(f"Column '{col}' in dataset '{key}' numeric conversion ratio: {non_na_ratio:.2f}")
+                try:
+                    logging.info(f"Attempting numeric conversion for column '{col}'.")
+                    cleaned = df[col].astype(str).str.replace(r"[^\d\.-]", "", regex=True)
+                    numeric_series = pd.to_numeric(cleaned, errors="coerce")
+                    non_na_ratio = numeric_series.notna().mean()
+                    logging.info(f"Column '{col}' numeric conversion ratio: {non_na_ratio:.2f}")
 
-                if non_na_ratio >= threshold:
-                    df[col] = numeric_series
-                    logging.info(f"Column '{col}' in dataset '{key}' converted to numeric.")
-                else:
-                    logging.info(f"Column '{col}' in dataset '{key}' conversion skipped (ratio below threshold).")
+                    if non_na_ratio >= threshold:
+                        df[col] = numeric_series
+                        logging.info(f"Column '{col}' successfully converted to numeric.")
+                    else:
+                        logging.info(f"Column '{col}' numeric conversion skipped (ratio below threshold).")
+                except Exception as e:
+                    logging.error(f"Error converting column '{col}' to numeric in dataset '{key}': {e}")
+                    continue
 
+            logging.info(f"Finished preprocessing for dataset '{key}'.")
         logging.info("Preprocessing complete.")
 
 
