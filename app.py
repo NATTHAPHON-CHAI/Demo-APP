@@ -284,14 +284,14 @@ class Session:
         session.created_at = data['created_at']
         session.messages = data['messages']
         session.file_path = data['file_path']
-        session.last_activity = data.get('last_activity', datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S'))
+        session.last_activity = data.get('last_activity', datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S'))
         return session
 
     def update_activity(self):
         """
         อัปเดตเวลาที่มีการใช้งาน session
         """
-        self.last_activity = datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+        self.last_activity = datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S')
 
 # =======================================================================
 # คลาส SessionManager สำหรับจัดการ session ทั้งหมด (สร้าง, โหลด, ลบ, รายการ)
