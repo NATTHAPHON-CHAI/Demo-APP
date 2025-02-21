@@ -23,6 +23,7 @@ load_dotenv()
 APP_NAME = "(DEMO) Data Analysis Assistant 📊"  # ชื่อของแอปพลิเคชัน
 BASE_SESSION_DIR = "sessions"            # โฟลเดอร์หลักสำหรับเก็บข้อมูล session ของผู้ใช้
 TEMP_UPLOAD_DIR = "temp_uploads"         # โฟลเดอร์ชั่วคราวสำหรับเก็บไฟล์ที่อัปโหลดเข้ามา
+THAI_TZ = pytz.timezone('Asia/Bangkok')
 
 # ตั้งค่าหน้าเว็บของ Streamlit
 st.set_page_config(
@@ -252,7 +253,7 @@ class Session:
         # กำหนด session_id ถ้าไม่ระบุจะสร้างใหม่โดยใช้ uuid
         self.session_id = session_id or str(uuid.uuid4())
         # เก็บเวลาที่ session ถูกสร้างในรูปแบบ UTC
-        self.created_at = datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+        self.created_at = datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S')
         # รายการข้อความใน session (ทั้งจากผู้ใช้และผู้ช่วย)
         self.messages = []
         # เก็บไฟล์ที่ถูกอัปโหลด (ถ้ามี)
@@ -544,7 +545,7 @@ def handle_submit(user_input):
         message = {
             "role": "user",
             "content": user_input,
-            "timestamp": datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+            "timestamp": datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S')
         }
         current_session.messages.append(message)
         st.session_state['messages'].append(message)
@@ -558,7 +559,7 @@ def handle_submit(user_input):
                 message = {
                     "role": "assistant",
                     "content": response.model_dump(),
-                    "timestamp": datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')
+                    "timestamp": datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S')
                 }
                 current_session.messages.append(message)
                 st.session_state['messages'].append(message)
@@ -615,7 +616,7 @@ def main():
         st.title("⚙️ Settings")
         
         # แสดงเวลาปัจจุบันในรูปแบบ UTC
-        st.info(f"🕒 UTC: {datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S')}")
+        st.info(f"🕒 UTC: {datetime.now(THAI_TZ).strftime('%Y-%m-%d %H:%M:%S')}")
         
         # แสดงข้อมูล session ปัจจุบัน (ถ้ามี)
         current_session = st.session_state.get('current_session')
