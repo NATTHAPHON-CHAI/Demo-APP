@@ -150,9 +150,11 @@ def get_prefix(columns, datatype, json_format):
     and the corresponding data types: {datatype}.
     
     Your response MUST be a valid JSON object with exactly the following keys:
-    - "query": a short description of what the code does,
-    - "explanation": a detailed explanation of the analysis,
-    - "code": the Python code, If generating plots, **always** include `tabulate` output alongside visualization.
+    {{
+        "query": "a short description of what the code does",
+        "explanation": "a detailed explanation of the analysis",
+        "code": "the Python code. If generating plots, **always** include `tabulate` alongside visualization."
+    }}
     
     Do not include any additional keys or fields.
     
