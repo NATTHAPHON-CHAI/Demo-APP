@@ -537,19 +537,30 @@ class SupervisorAgent:
         Returns:
             dict ที่มี key "response" และ "type" เพื่อระบุประเภทของ output
         """
-        if isinstance(output, dict):
-            return output
-        elif isinstance(output, str):
-            # หาก output ดูเหมือนเป็น JSON ให้พยายามแปลงเป็น dict
-            if output.strip().startswith('{'):
-                try:
-                    return json.loads(output)
-                except json.JSONDecodeError:
-                    return {"response": output, "type": "text_response"}
-            else:
-                return {"response": output, "type": "text_response"}
-        else:
-            return {"response": str(output), "type": "converted_response"}
+        # if isinstance(output, dict):
+        #     return output
+        # elif isinstance(output, str):
+        #     # หาก output ดูเหมือนเป็น JSON ให้พยายามแปลงเป็น dict
+        #     if output.strip().startswith('{'):
+        #         try:
+        #             return json.loads(output)
+        #         except json.JSONDecodeError:
+        #             return {"response": output, "type": "text_response"}
+        #     else:
+        #         return {"response": output, "type": "text_response"}
+        # else:
+        #     return {"response": str(output), "type": "converted_response"}
+        if isinstance(output, str):
+            # ลบ whitespace และ newline ที่ไม่จำเป็น
+            output = output.strip()
+            try:
+                # พยายาม parse JSON
+                return json.loads(output)
+            except json.JSONDecodeError as e:
+                logging.error(f"JSON parsing error: {e}")
+                # ถ้า parse ไม่ได้ ให้ส่งกลับในรูปแบบ dict ที่มี response field
+                return {"response": output}
+        return output
         
 
 
