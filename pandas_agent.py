@@ -233,17 +233,35 @@ class PandasAgent:
               - explanation: คำอธิบายเกี่ยวกับการวิเคราะห์ที่ทำขึ้น
             หากเกิดข้อผิดพลาด จะคืนค่า dict ที่มี key "error" พร้อมข้อความ error
         """
-        # เรียกใช้เมธอด run() เพื่อประมวลผล query และรับผลลัพธ์ในรูปแบบ dict
-        result = self.run(query, dataset_key)
-        # หากสถานะของผลลัพธ์เป็น "success" ให้ดึงข้อมูล query, code และ explanation จากผลลัพธ์ที่ validate แล้ว
-        if result.get("status") == "success":
-            data = result.get("data", {})
+        # # เรียกใช้เมธอด run() เพื่อประมวลผล query และรับผลลัพธ์ในรูปแบบ dict
+        # result = self.run(query, dataset_key)
+        # # หากสถานะของผลลัพธ์เป็น "success" ให้ดึงข้อมูล query, code และ explanation จากผลลัพธ์ที่ validate แล้ว
+        # if result.get("status") == "success":
+        #     data = result.get("data", {})
 
-            return {
-                "query": data.get('query'),
-                "code": data.get("code"),
-                "explanation": data.get("explanation")
-            }
-        else:
-            # หากสถานะไม่ใช่ success ให้คืนค่า dict ที่มี key "error" พร้อมข้อความ error ที่ได้รับ
+        #     return {
+        #         "query": data.get('query'),
+        #         "code": data.get("code"),
+        #         "explanation": data.get("explanation")
+        #     }
+        # else:
+        #     # หากสถานะไม่ใช่ success ให้คืนค่า dict ที่มี key "error" พร้อมข้อความ error ที่ได้รับ
+        #     return {"error": result.get("message", "Unknown error")}
+        try:
+            result = self.run(query, dataset_key)
+            if isinstance(result, str):
+                try:
+                    result = json.loads(result)
+                except json.JSONDecodeError:
+                    return {"error": "Invalid JSON response"}
+                    
+            if isinstance(result, dict) and result.get("status") == "success":
+                data = result.get("data", {})
+                return {
+                    "query": data.get('query'),
+                    "code": data.get("code"),
+                    "explanation": data.get("explanation")
+                }
             return {"error": result.get("message", "Unknown error")}
+        except Exception as e:
+            return {"error": str(e)}
