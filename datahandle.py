@@ -153,7 +153,8 @@ class DataHandler:
                 # -----------------------------
                 try:
                     logging.info(f"Attempting numeric conversion for column '{col}'.")
-                    cleaned = df[col].astype(str).str.replace(r"[^\d\.-]", "", regex=True)
+                    # cleaned = df[col].astype(str).str.replace(r"[^\d\.-]", "", regex=True)
+                    cleaned = df[col].astype(str).str.replace(r"[$@€£¥₹฿,]", "", regex=True)
                     numeric_series = pd.to_numeric(cleaned, errors="coerce")
                     non_na_ratio = numeric_series.notna().mean()
                     logging.info(f"Column '{col}' numeric conversion ratio: {non_na_ratio:.2f}")
